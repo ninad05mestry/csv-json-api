@@ -1,9 +1,10 @@
+//Ninad Mestry
 import fs from "fs";
 import readline from "readline";
 import config from "../config/env.js";
 import { pool } from "../db/index.js";
 
-// Convert dot notation (a.b.c) → nested JSON
+// Convert dot notation (a.b.c)  nested JSON
 function buildNestedJSON(flat) {
   const nested = {};
   for (const key in flat) {
@@ -42,13 +43,13 @@ export async function processCSVStream(req, res) {
     const row = line.value.trim();
     if (!row) continue;
 
-    // Process header
+    // Process header data
     if (!header.length) {
       header = row.split(",").map(h => h.trim());
       continue;
     }
 
-    // Process row
+    // Process row data
     const cols = row.split(",");
     const flat = {};
     header.forEach((key, i) => {
@@ -64,7 +65,7 @@ export async function processCSVStream(req, res) {
 
     const address = obj?.address || null;
 
-    // Additional info (excluding mapped fields)
+    // Additional info excluding mapped fields
     const { name: _n, age: _a, address: _ad, ...additional_info } = obj;
 
     batch.push({ name, age, address, additional_info });
@@ -79,7 +80,29 @@ export async function processCSVStream(req, res) {
 
   await printAgeDistribution();
 
-  res.json({ message: "CSV processed and inserted successfully." });
+  res.send(`
+  <html>
+    <head>
+      <title>CSV Upload Status</title>
+      <style>
+        body { font-family: Arial; padding: 20px; background: #f9f9f9; }
+        .box { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .success { color: green; font-size: 18px; font-weight: bold; margin-bottom: 10px; }
+        a { display: inline-block; margin-top: 10px; text-decoration: none; padding: 10px 15px; background: #007bff; color: white; border-radius: 5px; }
+        a:hover { background: #0056b3; }
+      </style>
+    </head>
+    <body>
+      <div class="box">
+        <div class="success">✔ CSV processed & inserted into PostgreSQL successfully!</div>
+        <p>Total entries processed from CSV and saved into database.</p>
+        <a href="/users">View Uploaded Data</a>
+        <a href="/process">Reprocess Again</a>
+      </div>
+    </body>
+  </html>
+`);
+
 }
 
 async function insertBatch(records) {
